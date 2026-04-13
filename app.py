@@ -33,7 +33,8 @@ def get_client() -> OpenAI:
             "OpenAI API key not found. Set OPENAI_API_KEY in environment "
             "variables or Streamlit secrets."
         )
-    return OpenAI(api_key=api_key)
+    return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+    
 
 
 def _init_session() -> None:
