@@ -251,7 +251,7 @@ def generate_checklist_with_openai(
     client: Any,
     structured: Dict[str, Any],
     seeds: Dict[str, List[str]],
-    model: str = "gpt-4o-mini",
+    model: str = "llama3-8b-8192",
     temperature: float = 0.3,
 ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
     """Phase 3 — single LLM call; returns checklist + meta."""
