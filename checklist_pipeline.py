@@ -315,7 +315,7 @@ def run_pipeline(
     project_type: str = "API",
     extras: str = "",
     client: Any = None,
-    model: str = "gpt-4o-mini",
+    model: str = "llama3-8b-8192",
 ) -> Dict[str, Any]:
     """
     End-to-end Phases 1–3. Requires OpenAI client for Phase 3.
