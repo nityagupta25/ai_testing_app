@@ -283,7 +283,7 @@ def generate_checklist_with_openai(
     client: Any,
     structured: Dict[str, Any],
     seeds: Dict[str, List[str]],
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-2.5-flash",
     temperature: float = 0.3,
 ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
     """Phase 3 — single LLM call; returns checklist + meta."""
@@ -342,7 +342,7 @@ def run_pipeline(
     project_type: str = "API",
     extras: str = "",
     client: Any = None,
-    model: str = "llama-3.3-70b-versatile",
+    model: str = "gemini-2.0-flash",
 ) -> Dict[str, Any]:
     """
     End-to-end Phases 1–3. Requires OpenAI client for Phase 3.

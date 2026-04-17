@@ -43,7 +43,7 @@ def get_client():
             "environment variables or Streamlit secrets."
         )
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-2.0-flash")
+    return genai.GenerativeModel("gemini-2.5-flash")
 
 
 
