@@ -247,30 +247,57 @@ Rules:
 """
 
 
+# def generate_checklist_with_openai(
+#     client: Any,
+#     structured: Dict[str, Any],
+#     seeds: Dict[str, List[str]],
+#     model: str = "llama-3.3-70b-versatile",
+#     temperature: float = 0.3,
+# ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
+#     """Phase 3 — single LLM call; returns checklist + meta."""
+#     user_prompt = build_llm_user_prompt(structured, seeds)
+#     t0 = time.perf_counter()
+#     response = client.chat.completions.create(
+#         model=model,
+#         temperature=temperature,
+#         messages=[
+#             {
+#                 "role": "system",
+#                 "content": "You are an expert QA engineer. Respond with clean JSON only.",
+#             },
+#             {"role": "user", "content": user_prompt},
+#         ],
+#     )
+#     elapsed_ms = int((time.perf_counter() - t0) * 1000)
+#     content = response.choices[0].message.content or "{}"
+#     parsed = json.loads(content)
+#     checklist = _normalize_llm_payload(parsed)
+#     meta = {
+#         "model": model,
+#         "generation_time_ms": elapsed_ms,
+#     }
+#     return checklist, meta
+
+
 def generate_checklist_with_openai(
     client: Any,
     structured: Dict[str, Any],
     seeds: Dict[str, List[str]],
-    model: str = "llama-3.3-70b-versatile",
+    model: str = "gemini-2.0-flash",
     temperature: float = 0.3,
 ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
     """Phase 3 — single LLM call; returns checklist + meta."""
     user_prompt = build_llm_user_prompt(structured, seeds)
     t0 = time.perf_counter()
-    response = client.chat.completions.create(
-        model=model,
-        temperature=temperature,
-        messages=[
-            {
-                "role": "system",
-                "content": "You are an expert QA engineer. Respond with clean JSON only.",
-            },
-            {"role": "user", "content": user_prompt},
-        ],
-    )
+    response = client.generate_content(user_prompt)
     elapsed_ms = int((time.perf_counter() - t0) * 1000)
-    content = response.choices[0].message.content or "{}"
-    parsed = json.loads(content)
+    content = response.text or "{}"
+    content = content.strip()
+    if content.startswith("```"):
+        content = content.split("```")[1]
+        if content.startswith("json"):
+            content = content[4:]
+    parsed = json.loads(content.strip())
     checklist = _normalize_llm_payload(parsed)
     meta = {
         "model": model,

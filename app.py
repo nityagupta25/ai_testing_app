@@ -5,7 +5,8 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-from openai import OpenAI
+#from openai import OpenAI
+import google.generativeai as genai
 
 from checklist_pipeline import SECTIONS, run_pipeline
 from coveriq_ui import coveriq_page_header, shell
@@ -25,16 +26,26 @@ def get_api_key() -> str:
         return st.secrets["OPENAI_API_KEY"]
     return os.getenv("OPENAI_API_KEY", "")
 
-
-def get_client() -> OpenAI:
+# def get_client() -> OpenAI:
+#     api_key = get_api_key()
+#     if not api_key:
+#         raise ValueError(
+#             "OpenAI API key not found. Set OPENAI_API_KEY in environment "
+#             "variables or Streamlit secrets."
+#         )
+#     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+    
+def get_client():
     api_key = get_api_key()
     if not api_key:
         raise ValueError(
-            "OpenAI API key not found. Set OPENAI_API_KEY in environment "
-            "variables or Streamlit secrets."
+            "Gemini API key not found. Set OPENAI_API_KEY in "
+            "environment variables or Streamlit secrets."
         )
-    return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
-    
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel("gemini-2.0-flash")
+
+
 
 
 def _init_session() -> None:
