@@ -21,6 +21,8 @@ LLM_KEY_TO_INTERNAL = {
     "Risk": "Risk",
 }
 
+TC_FIELDS = ["id", "test_summary", "description", "action", "data", "expected_result"]
+
 
 def normalize_feature_text(text: str) -> str:
     text = (text or "").strip()
@@ -174,6 +176,34 @@ def _normalize_llm_payload(parsed: Any) -> Dict[str, List[str]]:
     return out
 
 
+def _normalize_structured_payload(parsed: Any) -> Dict[str, List[Dict]]:
+    """Normalize structured test case payload from LLM."""
+    if not isinstance(parsed, dict):
+        return {k: [] for k in SECTIONS}
+    out: Dict[str, List[Dict]] = {k: [] for k in SECTIONS}
+    key_map = {
+        "functional_tests": "Functional",
+        "ui_tests": "UI",
+        "edge_cases": "Edge",
+        "regression": "Regression",
+        "risk_areas": "Risk",
+    }
+    for llm_key, section in key_map.items():
+        items = parsed.get(llm_key, [])
+        if isinstance(items, list):
+            for item in items:
+                if isinstance(item, dict):
+                    out[section].append({
+                        "id": str(item.get("id", "")),
+                        "test_summary": str(item.get("test_summary", "")),
+                        "description": str(item.get("description", "")),
+                        "action": str(item.get("action", "")),
+                        "data": str(item.get("data", "N/A")),
+                        "expected_result": str(item.get("expected_result", "")),
+                    })
+    return out
+
+
 def build_llm_user_prompt(
     structured: Dict[str, Any],
     seeds: Dict[str, List[str]],
@@ -197,18 +227,71 @@ def build_llm_user_prompt(
 
 ## Strict Rules
 - Every test case MUST directly reference specific elements from the feature description
-- Mention exact UI elements, button names, links, flows, or behaviors from the feature
-- Be precise — never write vague cases like "verify it works"
-- Each test case must start with a verb (Verify, Validate, Confirm, Check, Ensure, Test)
+- Mention exact UI elements, button names, links, flows, or behaviors
+- Be precise and actionable
 - Generate minimum 5 test cases per category
+- Each test case must have all 6 fields filled in completely
 
-Return ONLY valid JSON with exactly these keys and no other text:
+## Output Format
+Return ONLY valid JSON. Each category contains a list of test case objects with exactly these fields:
+- id: sequential ID like "FN-001", "UI-001", "ED-001", "RG-001", "RK-001"
+- test_summary: one line summary of what is being tested
+- description: detailed description of the test case
+- action: exact step-by-step actions the tester should perform
+- data: test data to use (write "N/A" if not applicable)
+- expected_result: what should happen after the action
+
 {{
-  "functional_tests": ["...", "..."],
-  "ui_tests": ["...", "..."],
-  "edge_cases": ["...", "..."],
-  "regression": ["...", "..."],
-  "risk_areas": ["...", "..."]
+  "functional_tests": [
+    {{
+      "id": "FN-001",
+      "test_summary": "Verify Report an Issue button click",
+      "description": "Verify that clicking the Report an Issue button navigates to the correct URL",
+      "action": "1. Click the ? icon on top right\\n2. Click Report an Issue (myIT) button",
+      "data": "N/A",
+      "expected_result": "The Report issue section opens at https://myit.siemens.com in a new tab"
+    }}
+  ],
+  "ui_tests": [
+    {{
+      "id": "UI-001",
+      "test_summary": "...",
+      "description": "...",
+      "action": "...",
+      "data": "N/A",
+      "expected_result": "..."
+    }}
+  ],
+  "edge_cases": [
+    {{
+      "id": "ED-001",
+      "test_summary": "...",
+      "description": "...",
+      "action": "...",
+      "data": "...",
+      "expected_result": "..."
+    }}
+  ],
+  "regression": [
+    {{
+      "id": "RG-001",
+      "test_summary": "...",
+      "description": "...",
+      "action": "...",
+      "data": "N/A",
+      "expected_result": "..."
+    }}
+  ],
+  "risk_areas": [
+    {{
+      "id": "RK-001",
+      "test_summary": "...",
+      "description": "...",
+      "action": "...",
+      "data": "...",
+      "expected_result": "..."
+    }}
+  ]
 }}"""
 
 
@@ -218,7 +301,7 @@ def generate_checklist_with_openai(
     seeds: Dict[str, List[str]],
     model: str = "llama-3.3-70b-versatile",
     temperature: float = 0.3,
-) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     user_prompt = build_llm_user_prompt(structured, seeds)
     t0 = time.perf_counter()
     response = client.chat.completions.create(
@@ -237,12 +320,12 @@ def generate_checklist_with_openai(
         if content.startswith("json"):
             content = content[4:]
     parsed = json.loads(content.strip())
-    checklist = _normalize_llm_payload(parsed)
+    checklist = _normalize_structured_payload(parsed)
     meta = {"model": model, "generation_time_ms": elapsed_ms}
     return checklist, meta
 
 
-def internal_to_api_checklist(checklist: Dict[str, List[str]]) -> Dict[str, List[str]]:
+def internal_to_api_checklist(checklist: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "functional_tests": checklist.get("Functional", []),
         "ui_tests": checklist.get("UI", []),
@@ -252,8 +335,8 @@ def internal_to_api_checklist(checklist: Dict[str, List[str]]) -> Dict[str, List
     }
 
 
-def api_to_internal_checklist(data: Dict[str, Any]) -> Dict[str, List[str]]:
-    out: Dict[str, List[str]] = {k: [] for k in SECTIONS}
+def api_to_internal_checklist(data: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, List] = {k: [] for k in SECTIONS}
     mapping = {
         "functional_tests": "Functional",
         "ui_tests": "UI",
@@ -263,7 +346,7 @@ def api_to_internal_checklist(data: Dict[str, Any]) -> Dict[str, List[str]]:
     }
     for api_key, internal in mapping.items():
         if api_key in data and isinstance(data[api_key], list):
-            out[internal] = [str(x).strip() for x in data[api_key] if str(x).strip()]
+            out[internal] = data[api_key]
     return out
 
 

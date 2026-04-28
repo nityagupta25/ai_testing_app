@@ -222,46 +222,29 @@ def page_generate() -> None:
         with st.expander("Phase 2 — scenario seeds", expanded=False):
             st.json(lp.get("seeds") or {})
 
-    checklist: Dict[str, List[str]] = st.session_state.checklist
+    checklist = st.session_state.checklist
     if any(checklist.get(s) for s in SECTIONS):
         st.markdown("---")
-        st.subheader("Editable Checklist")
+        st.subheader("Generated Test Cases")
         for section in SECTIONS:
+            items = checklist.get(section, [])
+            if not items:
+                continue
             st.markdown(f"### {section}")
-            section_cases = checklist.get(section, [])
-            if not section_cases:
-                st.info(f"No {section.lower()} test cases yet.")
-            for i in range(len(section_cases)):
-                c_text, c_del = st.columns([5, 1])
-                with c_text:
-                    checklist[section][i] = st.text_input(
-                        label=f"{section} #{i + 1}",
-                        value=section_cases[i],
-                        key=f"case_{section}_{i}",
-                        label_visibility="collapsed",
-                        placeholder=f"Enter {section.lower()} test case...",
-                    )
-                with c_del:
-                    st.caption("")
-                    if st.button("❌", key=f"del_{section}_{i}", help="Delete this test case"):
-                        checklist[section].pop(i)
-                        st.rerun()
-
-        st.markdown("#### Manage Test Cases")
-        mc1, mc2, mc3 = st.columns([2, 1, 1])
-        with mc1:
-            target_section = st.selectbox("Section", SECTIONS, key="target_section")
-        with mc2:
-            if st.button("Add Empty Test Case", use_container_width=True):
-                checklist[target_section].append("")
-                st.rerun()
-        with mc3:
-            if st.button("Delete Last Test Case", use_container_width=True):
-                if checklist[target_section]:
-                    checklist[target_section].pop()
-                    st.rerun()
-                else:
-                    st.warning(f"No test cases in {target_section} section.")
+            for i, tc in enumerate(items):
+                if isinstance(tc, dict):
+                    with st.expander(f"{tc.get('id','')} — {tc.get('test_summary','')}", expanded=False):
+                        col1, col2 = st.columns([3, 1])
+                        with col1:
+                            tc["test_summary"] = st.text_input("Test Summary", value=tc.get("test_summary",""), key=f"ts_{section}_{i}")
+                            tc["description"] = st.text_area("Description", value=tc.get("description",""), key=f"desc_{section}_{i}", height=80)
+                            tc["action"] = st.text_area("Action", value=tc.get("action",""), key=f"act_{section}_{i}", height=80)
+                        with col2:
+                            tc["data"] = st.text_input("Data", value=tc.get("data","N/A"), key=f"dat_{section}_{i}")
+                            tc["expected_result"] = st.text_area("Expected Result", value=tc.get("expected_result",""), key=f"exp_{section}_{i}", height=80)
+                            if st.button("🗑 Delete", key=f"del_{section}_{i}"):
+                                checklist[section].pop(i)
+                                st.rerun()
 
         st.markdown("---")
         st.subheader("Export")
