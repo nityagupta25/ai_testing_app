@@ -5,8 +5,7 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-#from openai import OpenAI
-import google.generativeai as genai
+from openai import OpenAI
 
 from checklist_pipeline import SECTIONS, run_pipeline
 from coveriq_ui import coveriq_page_header, shell
@@ -26,24 +25,12 @@ def get_api_key() -> str:
         return st.secrets["OPENAI_API_KEY"]
     return os.getenv("OPENAI_API_KEY", "")
 
-# def get_client() -> OpenAI:
-#     api_key = get_api_key()
-#     if not api_key:
-#         raise ValueError(
-#             "OpenAI API key not found. Set OPENAI_API_KEY in environment "
-#             "variables or Streamlit secrets."
-#         )
-#     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
-    
+
 def get_client():
     api_key = get_api_key()
     if not api_key:
-        raise ValueError(
-            "Gemini API key not found. Set OPENAI_API_KEY in "
-            "environment variables or Streamlit secrets."
-        )
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-2.5-flash")
+        raise ValueError("API key not found. Set OPENAI_API_KEY in Streamlit secrets.")
+    return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
 
 
@@ -263,19 +250,7 @@ def page_generate() -> None:
         height=200,
         key="gen_feature",
     )
-    st.caption("Include as much detail as possible for better AI-generated test scenarios")
-    st.markdown(
-        """
-<div style="background:#0a1c2e;border:1px solid #143044;border-radius:8px;padding:0.75rem 1rem;margin-top:0.5rem;font-size:0.85rem;color:#8a9bb0;">
-💡 <strong style="color:#00c2d4;">Tips for accurate results:</strong><br>
-- Mention <strong style="color:#e8eef5;">exact UI element names</strong> (e.g. "Report an Issue button")<br>
-- Describe <strong style="color:#e8eef5;">expected behavior</strong> (e.g. "should open in a new tab")<br>
-- Include <strong style="color:#e8eef5;">location context</strong> (e.g. "top right corner under '?' icon")<br>
-- Add any <strong style="color:#e8eef5;">URLs, flows, or conditions</strong> involved
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+    
     extras = st.text_area(
         "Additional preferences (optional)",
         placeholder='e.g. "high traffic", "quick service", latency SLOs, compliance notes…',
