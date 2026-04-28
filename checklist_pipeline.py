@@ -208,7 +208,72 @@ def build_llm_user_prompt(
 ) -> str:
     url = structured.get("url_analysis") or {}
     extras = structured.get("extras") or ""
-    return f"""You are an expert QA engineer generating complete test coverage.
+    return f"""You are a Senior Software QA Engineer with 10+ years of experience in functional testing, UI/UX validation, edge case analysis, regression testing, and risk assessment. You work at an enterprise software company and your job is to produce precise, actionable, and thorough test checklists for your development team.
+
+## Your Task
+Analyze the following feature description carefully and generate a comprehensive testing checklist. Every test case must be 100% specific to the feature described — no generic or boilerplate test cases allowed.
+
+## Feature Description
+{structured.get("feature", "")}
+
+## Application Context
+{structured.get("context", "")}
+
+## Application URL Info
+{json.dumps(url, ensure_ascii=False)}
+
+## Additional Tester Notes
+{extras or "(none)"}
+
+## Instructions
+- Read the feature description carefully before writing anything
+- Each test case must mention specific UI elements, buttons, links, flows, or behaviors from the feature
+- Write test cases a real QA engineer would actually execute
+- Be precise — avoid vague language like "verify it works" or "check the button"
+- Each test case should be one clear, actionable sentence
+- Generate minimum 5 test cases per category
+- Think about what could go wrong, what edge cases exist, and what regressions could happen
+
+## Output Format
+Return ONLY a valid JSON object with exactly these five keys and no other text:
+{{
+  "functional_tests": [
+    "Test case 1...",
+    "Test case 2...",
+    "Test case 3...",
+    "Test case 4...",
+    "Test case 5..."
+  ],
+  "ui_tests": [
+    "Test case 1...",
+    "Test case 2...",
+    "Test case 3...",
+    "Test case 4...",
+    "Test case 5..."
+  ],
+  "edge_cases": [
+    "Test case 1...",
+    "Test case 2...",
+    "Test case 3...",
+    "Test case 4...",
+    "Test case 5..."
+  ],
+  "regression": [
+    "Test case 1...",
+    "Test case 2...",
+    "Test case 3...",
+    "Test case 4...",
+    "Test case 5..."
+  ],
+  "risk_areas": [
+    "Test case 1...",
+    "Test case 2...",
+    "Test case 3...",
+    "Test case 4...",
+    "Test case 5..."
+  ]
+}}
+"""
 
 ## Feature (normalized)
 {structured.get("feature", "")}
@@ -279,17 +344,57 @@ Rules:
 #     return checklist, meta
 
 
+# def generate_checklist_with_openai(
+#     client: Any,
+#     structured: Dict[str, Any],
+#     seeds: Dict[str, List[str]],
+#     model: str = "gemini-2.5-flash",
+#     temperature: float = 0.3,
+# ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
+#     """Phase 3 — single LLM call; returns checklist + meta."""
+#     user_prompt = build_llm_user_prompt(structured, seeds)
+#     t0 = time.perf_counter()
+#     response = client.generate_content(user_prompt)
+#     elapsed_ms = int((time.perf_counter() - t0) * 1000)
+#     content = response.text or "{}"
+#     content = content.strip()
+#     if content.startswith("```"):
+#         content = content.split("```")[1]
+#         if content.startswith("json"):
+#             content = content[4:]
+#     parsed = json.loads(content.strip())
+#     checklist = _normalize_llm_payload(parsed)
+#     meta = {
+#         "model": model,
+#         "generation_time_ms": elapsed_ms,
+#     }
+#     return checklist, meta
+    
+
+
+
 def generate_checklist_with_openai(
     client: Any,
     structured: Dict[str, Any],
     seeds: Dict[str, List[str]],
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-1.5-flash",
     temperature: float = 0.3,
 ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
     """Phase 3 — single LLM call; returns checklist + meta."""
+    import google.generativeai as genai
     user_prompt = build_llm_user_prompt(structured, seeds)
     t0 = time.perf_counter()
-    response = client.generate_content(user_prompt)
+    system_instruction = (
+        "You are a Senior QA Engineer with 10+ years of experience. "
+        "You only respond with valid JSON. "
+        "Never add markdown, explanation, or extra text. "
+        "Only output the raw JSON object."
+    )
+    gemini_model = genai.GenerativeModel(
+        model,
+        system_instruction=system_instruction,
+    )
+    response = gemini_model.generate_content(user_prompt)
     elapsed_ms = int((time.perf_counter() - t0) * 1000)
     content = response.text or "{}"
     content = content.strip()
