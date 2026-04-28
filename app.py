@@ -33,8 +33,6 @@ def get_client():
     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
 
-
-
 def _init_session() -> None:
     if "cq_page" not in st.session_state:
         st.session_state.cq_page = "dashboard"
@@ -42,54 +40,15 @@ def _init_session() -> None:
         st.session_state.checklist = {s: [] for s in SECTIONS}
     if "cq_checklists" not in st.session_state:
         st.session_state.cq_checklists = [
-            {
-                "id": "cl1",
-                "title": "Add API Rate Limiting",
-                "meta": "API Gateway • 2 hours ago",
-                "status": "in_progress",
-                "done": 7,
-                "total": 11,
-            },
-            {
-                "id": "cl2",
-                "title": "New Login API",
-                "meta": "User Authentication • Today",
-                "status": "in_progress",
-                "done": 7,
-                "total": 15,
-            },
-            {
-                "id": "cl3",
-                "title": "Payment Flow Update",
-                "meta": "Payment Service • Yesterday",
-                "status": "completed",
-                "done": 12,
-                "total": 12,
-            },
+            {"id":"cl1","title":"Add API Rate Limiting","meta":"API Gateway • 2 hours ago","status":"in_progress","done":7,"total":11},
+            {"id":"cl2","title":"New Login API","meta":"User Authentication • Today","status":"in_progress","done":7,"total":15},
+            {"id":"cl3","title":"Payment Flow Update","meta":"Payment Service • Yesterday","status":"completed","done":12,"total":12},
         ]
     if "cq_projects" not in st.session_state:
         st.session_state.cq_projects = [
-            {
-                "name": "API Gateway",
-                "desc": "Core routing and policy enforcement",
-                "status": "testing",
-                "checklists": 5,
-                "coverage": 80,
-            },
-            {
-                "name": "Payment Service",
-                "desc": "Billing and payment orchestration",
-                "status": "review",
-                "checklists": 3,
-                "coverage": 65,
-            },
-            {
-                "name": "User Authentication",
-                "desc": "Identity and session management",
-                "status": "completed",
-                "checklists": 8,
-                "coverage": 100,
-            },
+            {"name":"API Gateway","desc":"Core routing and policy enforcement","status":"testing","checklists":5,"coverage":80},
+            {"name":"Payment Service","desc":"Billing and payment orchestration","status":"review","checklists":3,"coverage":65},
+            {"name":"User Authentication","desc":"Identity and session management","status":"completed","checklists":8,"coverage":100},
         ]
     if "cq_detail_id" not in st.session_state:
         st.session_state.cq_detail_id = None
@@ -105,19 +64,11 @@ def _init_session() -> None:
 
 def _mock_checklist_body() -> Dict[str, List[str]]:
     return {
-        "Functional": [
-            "Validate request threshold enforcement",
-            "Validate correct error response",
-            "Validate retry behavior",
-        ],
-        "UI": [
-            "Validate UI responsiveness across different screen sizes",
-            "Verify button states (hover, active, disabled)",
-            "Check form validation messages and error handling",
-        ],
-        "Edge": ["Burst traffic behavior", "Invalid API key handling", "Network interruption"],
-        "Regression": ["Existing authentication APIs", "API gateway routing"],
-        "Risk": ["Traffic spikes", "Token validation"],
+        "Functional": ["Validate request threshold enforcement","Validate correct error response","Validate retry behavior"],
+        "UI": ["Validate UI responsiveness across different screen sizes","Verify button states (hover, active, disabled)","Check form validation messages and error handling"],
+        "Edge": ["Burst traffic behavior","Invalid API key handling","Network interruption"],
+        "Regression": ["Existing authentication APIs","API gateway routing"],
+        "Risk": ["Traffic spikes","Token validation"],
     }
 
 
@@ -139,10 +90,7 @@ def _ensure_store(cid: str) -> None:
     st.session_state.cq_checklist_store[cid] = {
         "title": title,
         "checklist": body,
-        "meta": next(
-            (c["meta"] for c in st.session_state.cq_checklists if c["id"] == cid),
-            "",
-        ),
+        "meta": next((c["meta"] for c in st.session_state.cq_checklists if c["id"] == cid), ""),
         "total": total,
     }
     if cid not in st.session_state.cq_completed:
@@ -180,13 +128,8 @@ def _count_progress(cid: str) -> tuple[int, int]:
 
 
 def page_dashboard() -> None:
-    coveriq_page_header(
-        "SIEMENS",
-        "Dashboard",
-        "Welcome back! Here's your testing productivity overview.",
-    )
-    st.markdown(
-        """
+    coveriq_page_header("SIEMENS", "Dashboard", "Welcome back! Here's your testing productivity overview.")
+    st.markdown("""
 <div style="background:linear-gradient(135deg,#0098a8 0%,#00c2d4 100%);border-radius:12px;
 padding:1.25rem 1.5rem;color:#001018;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;">
   <div>
@@ -196,27 +139,20 @@ padding:1.25rem 1.5rem;color:#001018;margin-bottom:1rem;display:flex;justify-con
   </div>
   <div style="font-size:1.5rem;">↗</div>
 </div>
-""",
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         st.markdown("**Active Testing Projects**")
         for p in st.session_state.cq_projects:
             status = p["status"]
-            badge = {
-                "testing": ("Testing", "#00c2d4"),
-                "review": ("In Review", "#f5a623"),
-                "completed": ("Completed", "#3ecf8e"),
-            }.get(status, ("", "#888"))
+            badge = {"testing":("Testing","#00c2d4"),"review":("In Review","#f5a623"),"completed":("Completed","#3ecf8e")}.get(status,("","#888"))
             st.markdown(
                 f'<div class="coveriq-card" style="padding:0.75rem 1rem;">'
                 f'<div style="display:flex;justify-content:space-between;align-items:center;">'
                 f'<strong>{p["name"]}</strong>'
                 f'<span style="border:1px solid {badge[1]};color:{badge[1]};border-radius:999px;padding:2px 10px;font-size:0.75rem;">{badge[0]}</span></div>'
                 f'<div style="color:#8a9bb0;font-size:0.85rem;margin-top:0.35rem;">{p["coverage"]}% Coverage</div></div>',
-                unsafe_allow_html=True,
-            )
+                unsafe_allow_html=True)
     with c2:
         st.markdown("**Recent AI Generated Checklists**")
         for c in st.session_state.cq_checklists[:2]:
@@ -226,51 +162,38 @@ padding:1.25rem 1.5rem;color:#001018;margin-bottom:1rem;display:flex;justify-con
                 f'<div style="display:flex;justify-content:space-between;">'
                 f'<div><strong>{c["title"]}</strong><br/><span style="color:#8a9bb0;font-size:0.85rem;">{c["meta"].split("•")[-1].strip()}</span></div>'
                 f'<span style="color:#8a9bb0;">{pct}% Coverage</span></div></div>',
-                unsafe_allow_html=True,
-            )
+                unsafe_allow_html=True)
 
 
 def page_generate() -> None:
-    coveriq_page_header(
-        "SIEMENS",
-        "Generate AI Testing Checklist",
-        "Provide feature details and let AI generate comprehensive testing scenarios",
-    )
-    app_url = st.text_input(
-        "Application URL (Optional)",
-        placeholder="Paste application URL or environment link (e.g., staging / dev URL)",
-        key="gen_url",
-    )
-    st.caption(
-        "Providing an application link helps AI understand workflows and generate more accurate test scenarios"
-    )
-    feature_description = st.text_area(
-        "Feature Description",
-        placeholder="Paste feature description, Jira ticket, or PR details",
-        height=200,
-        key="gen_feature",
-    )
-    
-    extras = st.text_area(
-        "Additional preferences (optional)",
-        placeholder='e.g. "high traffic", "quick service", latency SLOs, compliance notes…',
-        height=80,
-        key="gen_extras",
-    )
+    coveriq_page_header("SIEMENS", "Generate AI Testing Checklist", "Provide feature details and let AI generate comprehensive testing scenarios")
+    app_url = st.text_input("Application URL (Optional)", placeholder="Paste application URL or environment link (e.g., staging / dev URL)", key="gen_url")
+    st.caption("Providing an application link helps AI understand workflows and generate more accurate test scenarios")
+    feature_description = st.text_area("Feature Description", placeholder="Paste feature description, Jira ticket, or PR details", height=200, key="gen_feature")
+    st.caption("Include as much detail as possible for better AI-generated test scenarios")
+    st.markdown("""
+<div style="background:#0a1c2e;border:1px solid #143044;border-radius:8px;padding:0.75rem 1rem;margin-top:0.5rem;font-size:0.85rem;color:#8a9bb0;">
+💡 <strong style="color:#00c2d4;">Tips for accurate results:</strong><br>
+- Mention <strong style="color:#e8eef5;">exact UI element names</strong> (e.g. "Report an Issue button")<br>
+- Describe <strong style="color:#e8eef5;">expected behavior</strong> (e.g. "should open in a new tab")<br>
+- Include <strong style="color:#e8eef5;">location context</strong> (e.g. "top right corner under '?' icon")<br>
+- Add any <strong style="color:#e8eef5;">URLs, flows, or conditions</strong> involved
+</div>
+""", unsafe_allow_html=True)
+    extras = st.text_area("Additional preferences (optional)", placeholder='e.g. "high traffic", "quick service", latency SLOs, compliance notes…', height=80, key="gen_extras")
     st.caption("Notes like workload, constraints, or rollout assumptions improve scenario quality.")
     project_type = st.selectbox("Project Type", PROJECT_TYPES, index=0, key="gen_pt")
-
     can_generate = bool(feature_description and feature_description.strip())
-    gen = st.button(
-        "✦ Generate AI Checklist",
-        type="primary",
-        use_container_width=True,
-        disabled=not can_generate,
-    )
+    gen = st.button("✦ Generate AI Checklist", type="primary", use_container_width=True, disabled=not can_generate)
 
     if gen and can_generate:
         with st.spinner("Phases 1–2: parsing context · Phase 3: calling LLM…"):
             try:
+                for section in SECTIONS:
+                    for i in range(50):
+                        key = f"case_{section}_{i}"
+                        if key in st.session_state:
+                            del st.session_state[key]
                 result = run_pipeline(
                     feature_description.strip(),
                     app_url=app_url or "",
@@ -286,10 +209,7 @@ def page_generate() -> None:
                     else feature_description.strip()
                 )
                 meta = result.get("meta") or {}
-                st.success(
-                    f"Checklist generated · {meta.get('model', 'model')} · "
-                    f"{meta.get('generation_time_ms', 0)} ms"
-                )
+                st.success(f"Checklist generated · {meta.get('model','model')} · {meta.get('generation_time_ms',0)} ms")
             except json.JSONDecodeError:
                 st.error("AI response could not be parsed as JSON. Please try again.")
             except Exception as exc:
@@ -323,11 +243,7 @@ def page_generate() -> None:
                     )
                 with c_del:
                     st.caption("")
-                    if st.button(
-                        "❌",
-                        key=f"del_{section}_{i}",
-                        help="Delete this test case",
-                    ):
+                    if st.button("❌", key=f"del_{section}_{i}", help="Delete this test case"):
                         checklist[section].pop(i)
                         st.rerun()
 
@@ -356,95 +272,37 @@ def page_generate() -> None:
         safe = "".join(c for c in title if c.isalnum() or c in (" ", "-", "_"))[:40].strip()
         ex0, ex1, ex2, ex3, ex4 = st.columns(5)
         with ex0:
-            st.download_button(
-                label="CSV",
-                data=csv_data,
-                file_name=f"{safe or 'checklist'}.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+            st.download_button(label="CSV", data=csv_data, file_name=f"{safe or 'checklist'}.csv", mime="text/csv", use_container_width=True)
         with ex1:
-            st.download_button(
-                "Excel (.xlsx)",
-                data=checklist_to_excel_bytes(checklist),
-                file_name=f"{safe or 'checklist'}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-            )
+            st.download_button("Excel (.xlsx)", data=checklist_to_excel_bytes(checklist), file_name=f"{safe or 'checklist'}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
         with ex2:
-            st.download_button(
-                "Word (.docx)",
-                data=checklist_to_docx_bytes(checklist, title=title),
-                file_name=f"{safe or 'checklist'}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-            )
+            st.download_button("Word (.docx)", data=checklist_to_docx_bytes(checklist, title=title), file_name=f"{safe or 'checklist'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
         with ex3:
-            st.download_button(
-                "Jira (JSON)",
-                data=checklist_to_jira_json_bytes(checklist, summary=title),
-                file_name=f"{safe or 'checklist'}_jira.json",
-                mime="application/json",
-                use_container_width=True,
-            )
+            st.download_button("Jira (JSON)", data=checklist_to_jira_json_bytes(checklist, summary=title), file_name=f"{safe or 'checklist'}_jira.json", mime="application/json", use_container_width=True)
         with ex4:
-            st.download_button(
-                "TestRail (CSV)",
-                data=checklist_to_testrail_csv_bytes(checklist),
-                file_name=f"{safe or 'checklist'}_testrail.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+            st.download_button("TestRail (CSV)", data=checklist_to_testrail_csv_bytes(checklist), file_name=f"{safe or 'checklist'}_testrail.csv", mime="text/csv", use_container_width=True)
 
         if st.button("Save to Active Checklists", type="primary", use_container_width=True):
             cid = f"u{uuid.uuid4().hex[:10]}"
             body = {s: list(checklist.get(s, [])) for s in SECTIONS}
             total = sum(len(v) for v in body.values())
             title = st.session_state.feature_title or "Untitled feature"
-            st.session_state.cq_checklist_store[cid] = {
-                "title": title,
-                "checklist": body,
-                "meta": f"{project_type} • Just now",
-                "total": total,
-            }
+            st.session_state.cq_checklist_store[cid] = {"title": title, "checklist": body, "meta": f"{project_type} • Just now", "total": total}
             st.session_state.cq_completed[cid] = set()
-            st.session_state.cq_checklists.insert(
-                0,
-                {
-                    "id": cid,
-                    "title": title,
-                    "meta": f"{project_type} • Just now",
-                    "status": "in_progress",
-                    "done": 0,
-                    "total": total,
-                },
-            )
+            st.session_state.cq_checklists.insert(0, {"id": cid, "title": title, "meta": f"{project_type} • Just now", "status": "in_progress", "done": 0, "total": total})
             st.success("Saved to Active Checklists.")
             st.session_state.cq_page = "active"
             st.rerun()
 
 
 def page_active() -> None:
-    coveriq_page_header(
-        "SIEMENS",
-        "Active Checklists",
-        "Manage and track your AI-generated testing checklists",
-    )
+    coveriq_page_header("SIEMENS", "Active Checklists", "Manage and track your AI-generated testing checklists")
     for c in st.session_state.cq_checklists:
         pct = int(100 * c["done"] / c["total"]) if c["total"] else 0
-        status = c["status"]
-        badge = (
-            "🕐 In Progress"
-            if status == "in_progress"
-            else "✓ Completed"
-        )
+        badge = "🕐 In Progress" if c["status"] == "in_progress" else "✓ Completed"
         col_a, col_b = st.columns([4, 1])
         with col_a:
-            st.markdown(
-                f"**{c['title']}**  \n"
-                f"<span style='color:#8a9bb0;font-size:0.9rem;'>📄 {c['meta']}</span>",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"**{c['title']}**  \n<span style='color:#8a9bb0;font-size:0.9rem;'>📄 {c['meta']}</span>", unsafe_allow_html=True)
             st.progress(min(pct / 100.0, 1.0))
             st.caption(f"{c['done']} / {c['total']} items")
         with col_b:
@@ -456,19 +314,10 @@ def page_active() -> None:
 
 
 def page_projects() -> None:
-    coveriq_page_header(
-        "SIEMENS",
-        "Projects",
-        "Overview of all testing projects and their coverage",
-    )
+    coveriq_page_header("SIEMENS", "Projects", "Overview of all testing projects and their coverage")
     cols = st.columns(3, gap="medium")
     for i, p in enumerate(st.session_state.cq_projects):
-        status = p["status"]
-        badge_style = {
-            "testing": ("Testing", "#00c2d4"),
-            "review": ("In Review", "#f5a623"),
-            "completed": ("Completed", "#3ecf8e"),
-        }.get(status, ("", "#888"))
+        badge_style = {"testing":("Testing","#00c2d4"),"review":("In Review","#f5a623"),"completed":("Completed","#3ecf8e")}.get(p["status"],("","#888"))
         with cols[i]:
             st.markdown(
                 f'<div class="coveriq-card">'
@@ -480,22 +329,17 @@ def page_projects() -> None:
                 f'<div style="display:flex;justify-content:space-between;color:#8a9bb0;font-size:0.88rem;"><span>Checklists</span><span>{p["checklists"]}</span></div>'
                 f'<div style="display:flex;justify-content:space-between;color:#8a9bb0;font-size:0.88rem;"><span>Coverage</span><span>{p["coverage"]}%</span></div>'
                 f'<div style="margin-top:0.5rem;">',
-                unsafe_allow_html=True,
-            )
+                unsafe_allow_html=True)
             st.progress(p["coverage"] / 100.0)
             st.markdown("</div>", unsafe_allow_html=True)
 
 
 def page_insights() -> None:
-    coveriq_page_header(
-        "SIEMENS",
-        "AI Insights",
-        "AI-powered recommendations and testing intelligence",
-    )
+    coveriq_page_header("SIEMENS", "AI Insights", "AI-powered recommendations and testing intelligence")
     insights = [
-        ("🎯", "High Test Coverage Patterns", "Projects with API integration testing show 23% higher coverage rates", "#0d2a22"),
-        ("⚠", "Common Testing Gaps", "Authentication edge cases are frequently missed in 40% of feature tests", "#2a2210"),
-        ("📈", "Productivity Trend", "Team testing velocity increased by 32% after adopting AI-generated checklists", "#0f1c2a"),
+        ("🎯","High Test Coverage Patterns","Projects with API integration testing show 23% higher coverage rates","#0d2a22"),
+        ("⚠","Common Testing Gaps","Authentication edge cases are frequently missed in 40% of feature tests","#2a2210"),
+        ("📈","Productivity Trend","Team testing velocity increased by 32% after adopting AI-generated checklists","#0f1c2a"),
     ]
     for icon, title, desc, tint in insights:
         st.markdown(
@@ -504,30 +348,18 @@ def page_insights() -> None:
             f'<div style="font-size:1.5rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#0a1c2e;border-radius:10px;">{icon}</div>'
             f'<div><strong>{title}</strong><p style="color:#8a9bb0;margin:0.35rem 0 0 0;font-size:0.92rem;">{desc}</p></div>'
             f"</div></div>",
-            unsafe_allow_html=True,
-        )
+            unsafe_allow_html=True)
 
 
 def page_settings() -> None:
-    coveriq_page_header(
-        "SIEMENS",
-        "Settings",
-        "Manage your account and application preferences",
-    )
-    settings_rows = [
-        ("👤", "Profile", "Manage your account information and preferences"),
-        ("🔔", "Notifications", "Configure email and in-app notification settings"),
-        ("🛡", "Security", "Manage password and two-factor authentication"),
-        ("🎨", "Appearance", "Customize theme and display preferences"),
-    ]
-    for icon, title, desc in settings_rows:
+    coveriq_page_header("SIEMENS", "Settings", "Manage your account and application preferences")
+    for icon, title, desc in [("👤","Profile","Manage your account information and preferences"),("🔔","Notifications","Configure email and in-app notification settings"),("🛡","Security","Manage password and two-factor authentication"),("🎨","Appearance","Customize theme and display preferences")]:
         st.markdown(
             f'<div class="coveriq-card"><div style="display:flex;gap:1rem;align-items:center;">'
             f'<div style="font-size:1.35rem;">{icon}</div>'
             f"<div><strong>{title}</strong><br/><span style='color:#8a9bb0;font-size:0.9rem;'>{desc}</span></div>"
             f"</div></div>",
-            unsafe_allow_html=True,
-        )
+            unsafe_allow_html=True)
 
 
 def page_detail() -> None:
@@ -545,12 +377,10 @@ def page_detail() -> None:
             st.session_state.cq_detail_id = None
             st.rerun()
         return
-
     title = data["title"]
     body = data["checklist"]
     done, total = _count_progress(cid)
     pct = int(100 * done / total) if total else 0
-
     chead, cback = st.columns([5, 1])
     with chead:
         st.markdown(f"## Feature: {title}")
@@ -561,13 +391,10 @@ def page_detail() -> None:
             st.session_state.cq_page = "active"
             st.session_state.cq_detail_id = None
             st.rerun()
-
     st.markdown(
         f'<div style="background:linear-gradient(90deg,#0098a8,#00c2d4);color:#001018;padding:0.65rem 1rem;border-radius:8px;font-weight:600;margin:0.5rem 0 1rem 0;">'
         f"AI Generated — You can edit or remove items in Generate view</div>",
-        unsafe_allow_html=True,
-    )
-
+        unsafe_allow_html=True)
     main_c, sug_c = st.columns([2.2, 1], gap="medium")
     with main_c:
         done_set = st.session_state.cq_completed.setdefault(cid, set())
@@ -579,11 +406,7 @@ def page_detail() -> None:
             for idx, item in enumerate(items):
                 key = _item_key(cid, section, idx)
                 was = key in done_set
-                new = st.checkbox(
-                    item,
-                    value=was,
-                    key=f"chk_{cid}_{section}_{idx}",
-                )
+                new = st.checkbox(item, value=was, key=f"chk_{cid}_{section}_{idx}")
                 if new != was:
                     if new:
                         done_set.add(key)
@@ -591,7 +414,6 @@ def page_detail() -> None:
                         done_set.discard(key)
                     _sync_list_done(cid)
                     st.rerun()
-
         st.markdown("---")
         b1, b2, b3, b4, b5 = st.columns(5)
         with b1:
@@ -600,13 +422,7 @@ def page_detail() -> None:
         df = checklist_to_df(body)
         csv_bytes = df.to_csv(index=False).encode("utf-8")
         with b2:
-            st.download_button(
-                "Export CSV",
-                csv_bytes,
-                file_name="checklist.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+            st.download_button("Export CSV", csv_bytes, file_name="checklist.csv", mime="text/csv", use_container_width=True)
         with b3:
             if st.button("Jira", use_container_width=True):
                 st.caption("Placeholder")
@@ -616,25 +432,11 @@ def page_detail() -> None:
         with b5:
             if st.button("Word", use_container_width=True):
                 st.caption("Placeholder")
-
     with sug_c:
         st.markdown("### 💡 AI Suggestions")
-        tips = [
-            "Similar features often miss testing session expiration.",
-            "Consider testing rate limit under burst traffic.",
-            "Regression risk detected in authentication module.",
-        ]
-        for t in tips:
-            st.markdown(
-                f'<div class="coveriq-card" style="border-color:#5c4a1a;background:#1a1408;">'
-                f'<span style="color:#f5a623;">⚠</span> {t}</div>',
-                unsafe_allow_html=True,
-            )
-        st.markdown(
-            '<div class="coveriq-card" style="border-color:#143044;"><strong style="color:#00c2d4;">Pro Tip</strong>'
-            '<p style="color:#8a9bb0;font-size:0.88rem;margin:0.5rem 0 0 0;">Suggestions reflect common patterns from similar features and typical testing gaps.</p></div>',
-            unsafe_allow_html=True,
-        )
+        for t in ["Similar features often miss testing session expiration.","Consider testing rate limit under burst traffic.","Regression risk detected in authentication module."]:
+            st.markdown(f'<div class="coveriq-card" style="border-color:#5c4a1a;background:#1a1408;"><span style="color:#f5a623;">⚠</span> {t}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="coveriq-card" style="border-color:#143044;"><strong style="color:#00c2d4;">Pro Tip</strong><p style="color:#8a9bb0;font-size:0.88rem;margin:0.5rem 0 0 0;">Suggestions reflect common patterns from similar features and typical testing gaps.</p></div>', unsafe_allow_html=True)
 
 
 def main_content() -> None:
@@ -658,11 +460,7 @@ def main_content() -> None:
 
 
 def main() -> None:
-    st.set_page_config(
-        page_title="CoverIQ · AI Testing",
-        layout="wide",
-        initial_sidebar_state="collapsed",
-    )
+    st.set_page_config(page_title="CoverIQ · AI Testing", layout="wide", initial_sidebar_state="collapsed")
     _init_session()
     active_nav = st.session_state.get("cq_page", "dashboard")
     if st.session_state.get("cq_detail_id"):
