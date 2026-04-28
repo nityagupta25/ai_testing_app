@@ -3,7 +3,7 @@ Phased checklist generation (Problem Statement Phases 1–3).
 
 Phase 1 — Input processing: structured feature representation.
 Phase 2 — Scenario seeds: category hints for the LLM.
-Phase 3 — LLM call: normalized checklist + metadata.
+Phase 3 - LLM call: normalized checklist + metadata.
 """
 
 from __future__ import annotations
@@ -208,16 +208,24 @@ def build_llm_user_prompt(
 ) -> str:
     url = structured.get("url_analysis") or {}
     extras = structured.get("extras") or ""
+    project_context = structured.get("context", "").split(";")[0]
     return f"""You are a Senior Software QA Engineer with 10+ years of experience in functional testing, UI/UX validation, edge case analysis, regression testing, and risk assessment. You work at an enterprise software company and your job is to produce precise, actionable, and thorough test checklists for your development team.
 
 ## Your Task
 Analyze the following feature description carefully and generate a comprehensive testing checklist. Every test case must be 100% specific to the feature described — no generic or boilerplate test cases allowed.
 
-## Feature Description
+## Feature Description (MOST IMPORTANT — base ALL tests strictly on this)
 {structured.get("feature", "")}
 
-## Application Context
-{structured.get("context", "")}
+## Project Type
+{project_context}
+
+Think about the project type carefully:
+- Web app → focus on browser behavior, UI states, responsiveness, navigation
+- API → focus on endpoints, status codes, payloads, authentication, rate limiting
+- Mobile → focus on gestures, offline mode, screen sizes, device compatibility
+- Backend → focus on data integrity, processing, queues, error handling
+- Desktop → focus on OS compatibility, installation, performance, UI states
 
 ## Application URL Info
 {json.dumps(url, ensure_ascii=False)}
@@ -225,55 +233,39 @@ Analyze the following feature description carefully and generate a comprehensive
 ## Additional Tester Notes
 {extras or "(none)"}
 
-## Instructions
-- Read the feature description carefully before writing anything
-- Each test case must mention specific UI elements, buttons, links, flows, or behaviors from the feature
-- Write test cases a real QA engineer would actually execute
-- Be precise — avoid vague language like "verify it works" or "check the button"
-- Each test case should be one clear, actionable sentence
+## Strict Rules
+- Every single test case MUST directly reference specific elements from the feature description
+- Mention exact UI elements, button names, links, flows, or behaviors from the feature
+- Write test cases a real QA engineer would actually execute step by step
+- Be precise — never write vague cases like "verify it works" or "check the button"
+- Each test case must be one clear, actionable sentence starting with a verb (Verify, Validate, Confirm, Check, Ensure, Test)
 - Generate minimum 5 test cases per category
-- Think about what could go wrong, what edge cases exist, and what regressions could happen
+- Think deeply about what could go wrong, what edge cases exist, and what regressions could happen
 
 ## Output Format
-Return ONLY a valid JSON object with exactly these five keys and no other text:
+Return ONLY a valid JSON object with exactly these five keys and no other text outside the JSON:
 {{
   "functional_tests": [
-    "Test case 1...",
-    "Test case 2...",
-    "Test case 3...",
-    "Test case 4...",
-    "Test case 5..."
+    "Verify that clicking the Report an Issue button opens the correct URL in a new tab...",
+    "..."
   ],
   "ui_tests": [
-    "Test case 1...",
-    "Test case 2...",
-    "Test case 3...",
-    "Test case 4...",
-    "Test case 5..."
+    "Verify that the Report an Issue button is visually separated from other items by a divider line...",
+    "..."
   ],
   "edge_cases": [
-    "Test case 1...",
-    "Test case 2...",
-    "Test case 3...",
-    "Test case 4...",
-    "Test case 5..."
+    "Verify behavior when the external URL is unreachable or returns an error...",
+    "..."
   ],
   "regression": [
-    "Test case 1...",
-    "Test case 2...",
-    "Test case 3...",
-    "Test case 4...",
-    "Test case 5..."
+    "Verify that existing navigation items are unaffected after adding the Report an Issue button...",
+    "..."
   ],
   "risk_areas": [
-    "Test case 1...",
-    "Test case 2...",
-    "Test case 3...",
-    "Test case 4...",
-    "Test case 5..."
+    "Verify that the deep link URL does not expose sensitive session tokens...",
+    "..."
   ]
 }}
-"""
 
 ## Feature (normalized)
 {structured.get("feature", "")}
@@ -319,7 +311,7 @@ Rules:
 #     model: str = "llama-3.3-70b-versatile",
 #     temperature: float = 0.3,
 # ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
-#     """Phase 3 — single LLM call; returns checklist + meta."""
+#     """Phase 3 - single LLM call; returns checklist + meta."""
 #     user_prompt = build_llm_user_prompt(structured, seeds)
 #     t0 = time.perf_counter()
 #     response = client.chat.completions.create(
@@ -351,7 +343,7 @@ Rules:
 #     model: str = "gemini-2.5-flash",
 #     temperature: float = 0.3,
 # ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
-#     """Phase 3 — single LLM call; returns checklist + meta."""
+#     """Phase 3 - single LLM call; returns checklist + meta."""
 #     user_prompt = build_llm_user_prompt(structured, seeds)
 #     t0 = time.perf_counter()
 #     response = client.generate_content(user_prompt)
@@ -380,7 +372,7 @@ def generate_checklist_with_openai(
     model: str = "gemini-1.5-flash",
     temperature: float = 0.3,
 ) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
-    """Phase 3 — single LLM call; returns checklist + meta."""
+    """Phase 3 - single LLM call; returns checklist + meta."""
     import google.generativeai as genai
     user_prompt = build_llm_user_prompt(structured, seeds)
     t0 = time.perf_counter()
@@ -412,7 +404,7 @@ def generate_checklist_with_openai(
 
 
 def internal_to_api_checklist(checklist: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    """Map internal keys to problem-statement API / §3.4 JSON shape."""
+    """Map internal keys to problem-statement API / 3.4 JSON shape."""
     return {
         "functional_tests": checklist.get("Functional", []),
         "ui_tests": checklist.get("UI", []),
@@ -450,7 +442,7 @@ def run_pipeline(
     model: str = "gemini-2.0-flash",
 ) -> Dict[str, Any]:
     """
-    End-to-end Phases 1–3. Requires OpenAI client for Phase 3.
+    End-to-end Phases 1-3. Requires OpenAI client for Phase 3.
 
     Returns:
       intermediate (phase 1),

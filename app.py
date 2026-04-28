@@ -264,8 +264,8 @@ def page_generate() -> None:
         key="gen_feature",
     )
     st.caption("Include as much detail as possible for better AI-generated test scenarios")
-st.markdown(
-    """
+    st.markdown(
+        """
 <div style="background:#0a1c2e;border:1px solid #143044;border-radius:8px;padding:0.75rem 1rem;margin-top:0.5rem;font-size:0.85rem;color:#8a9bb0;">
 💡 <strong style="color:#00c2d4;">Tips for accurate results:</strong><br>
 - Mention <strong style="color:#e8eef5;">exact UI element names</strong> (e.g. "Report an Issue button")<br>
@@ -273,9 +273,9 @@ st.markdown(
 - Include <strong style="color:#e8eef5;">location context</strong> (e.g. "top right corner under '?' icon")<br>
 - Add any <strong style="color:#e8eef5;">URLs, flows, or conditions</strong> involved
 </div>
-"""
-    unsafe_allow_html=True,
-)
+""",
+        unsafe_allow_html=True,
+    )
     extras = st.text_area(
         "Additional preferences (optional)",
         placeholder='e.g. "high traffic", "quick service", latency SLOs, compliance notes…',
