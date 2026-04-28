@@ -273,7 +273,7 @@ st.markdown(
 - Include <strong style="color:#e8eef5;">location context</strong> (e.g. "top right corner under '?' icon")<br>
 - Add any <strong style="color:#e8eef5;">URLs, flows, or conditions</strong> involved
 </div>
-""",
+"""
     unsafe_allow_html=True,
 )
     extras = st.text_area(
